@@ -56,7 +56,7 @@ Para realizarlo necesitaba:
 
 ## 3. Punto de partida y herramientas
 
-Utilicé la aplicación LabTrack que ya tenía funcionando de la Unidad II. Para esta actividad saqué una copia en una carpeta independiente y trabajé en la rama `unidad3-docker`, conservando el repositorio anterior como referencia.
+Utilicé LabTrack, la aplicación que terminé en la Unidad II. Hice una copia del proyecto en otra carpeta, trabajé los cambios en la rama `unidad3-docker` y después los publiqué en la rama `main` del nuevo repositorio. Así conservé la versión anterior por separado.
 
 | Herramienta | Uso en esta unidad |
 |---|---|
@@ -161,13 +161,14 @@ Estos son los pasos que seguí para ejecutar el proyecto en Linux. Para repetirl
 
 ### 5.1 Descargar y entrar al proyecto
 
-Desde GitHub se puede descargar el repositorio de esta unidad utilizando el botón **Code** y la opción de clonar. Después se entra a la carpeta del proyecto:
+Para descargar la práctica en otra computadora, se puede clonar el repositorio público con estos comandos:
 
 ```bash
-cd ~/proyectos/labtrack-unidad3
+git clone https://github.com/RoxyRg/labtrack-unidad3-docker.git
+cd labtrack-unidad3-docker
 ```
 
-> En mi caso, la carpeta de la Unidad III la preparé a partir del repositorio de la Unidad II. La práctica quedó publicada en un repositorio independiente, conservando los archivos Docker y el código del proyecto.
+En mi computadora trabajé desde `~/proyectos/labtrack-unidad3`, porque primero había creado esa carpeta a partir del proyecto de la Unidad II. Después publiqué el código y los archivos Docker en este repositorio independiente.
 
 ### 5.2 Preparar las variables privadas
 
@@ -315,7 +316,7 @@ En el instrumento se solicitan pruebas de cada parte del proyecto. Estas son las
 | `GET /api/auth/me` sin JWT | HTTP 401 |
 | Acceso al sistema desde Firefox | Login, inventario y préstamos visibles |
 
-Las **dos pruebas de Vitest** comprueban el componente principal de Angular. La prueba inicial de **Jest** comprueba una ruta básica de NestJS. No las presento como pruebas de todos los préstamos: esa parte la comprobé por separado desde la aplicación y mediante las peticiones a la API.
+Las **dos pruebas de Vitest** comprueban el componente principal de Angular y la prueba de **Jest** revisa una ruta básica de NestJS. El resto de las operaciones, como el préstamo y la devolución, las probé por separado desde la API y el navegador.
 
 ## 7. Límites de recursos
 
@@ -390,7 +391,7 @@ Las capturas muestran el cambio del **estado del préstamo** hasta `DEVUELTO`. L
 
 ## 9. Persistencia y prueba de carga
 
-Para documentar mejor la orquestación, dejé preparados estos procedimientos de verificación. **Las capturas que reuní hasta ahora no incluyen el resultado de una prueba de persistencia después de reiniciar ni una prueba de carga**, por lo que no las doy por aprobadas sin ejecutarlas.
+Todavía me falta comprobar la persistencia después de reiniciar los contenedores y hacer una prueba de carga. Dejé los comandos en esta sección para ejecutarlos y agregar las capturas cuando termine ambas comprobaciones.
 
 ### 9.1 Persistencia de PostgreSQL después de un reinicio
 
@@ -528,7 +529,7 @@ El instrumento de la Unidad III pide los ejercicios realizados en clase y una gu
 | SER: asistencia, actitud y portafolio | 1 pt | Se revisa en clase y lo valora el docente |
 | **Total** | **10 pts** | **Calificación sujeta a revisión del profesor** |
 
-La documentación de una prueba de carga y de persistencia después de reiniciar se puede completar con los comandos de la sección 9. Esas ejecuciones todavía no están acreditadas por el archivo de evidencias recibido.
+Los comandos de la sección 9 están preparados, pero todavía tengo que ejecutarlos y guardar las salidas en las evidencias. Los ejercicios de clase también los agregaré cuando los termine.
 
 ## 13. Conclusión
 
