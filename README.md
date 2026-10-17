@@ -167,7 +167,7 @@ Desde GitHub se puede descargar el repositorio de esta unidad utilizando el bot�
 cd ~/proyectos/labtrack-unidad3
 ```
 
-> En mi caso, la carpeta de la Unidad III la preparé a partir del repositorio de la Unidad II. Para publicar esta actividad se debe utilizar un repositorio independiente y conservar los archivos de Docker junto con el código.
+> En mi caso, la carpeta de la Unidad III la preparé a partir del repositorio de la Unidad II. La práctica quedó publicada en un repositorio independiente, conservando los archivos Docker y el código del proyecto.
 
 ### 5.2 Preparar las variables privadas
 
@@ -524,7 +524,7 @@ El instrumento de la Unidad III pide los ejercicios realizados en clase y una gu
 | Instalación y configuración | 1 pt | Sección 5 y enlaces a Dockerfiles, Nginx y Compose |
 | Limitaciones de recursos | 1 pt | Sección 7: CPU, memoria, procesos y `docker stats` |
 | Evidencia de funcionamiento y orquestación | 1 pt | Secciones 5, 8 y 10: salud de servicios y flujo de préstamos |
-| Repositorio con archivos de orquestación | 1 pt | Los archivos están preparados para publicarse junto con este README; falta comprobar el enlace final del nuevo repositorio |
+| Repositorio con archivos de orquestación | 1 pt | Repositorio publicado en https://github.com/RoxyRg/labtrack-unidad3-docker |
 | SER: asistencia, actitud y portafolio | 1 pt | Se revisa en clase y lo valora el docente |
 | **Total** | **10 pts** | **Calificación sujeta a revisión del profesor** |
 
@@ -538,7 +538,8 @@ Lo que más se me complicó no fue crear los contenedores, sino hacer que funcio
 
 También pude observar cuánto recurso estaba utilizando cada contenedor y dejar límites para que esta práctica no interfiera con los otros proyectos que tengo en mi computadora. Entendí mejor para qué sirven las redes internas de Docker, los healthchecks y los volúmenes de datos. Considero que el avance más importante fue pasar de tener una aplicación que funcionaba solamente en mi entorno de desarrollo a una que puedo iniciar y revisar de manera más ordenada con Compose.
 
-**Méndez Fernández Alan Eusebio**  
+**Méndez Fernández Alan Eusebio**
+
 *Ingeniería en Redes Inteligentes y Ciberseguridad — GIRI6091*
 
 ## 14. Referencias
