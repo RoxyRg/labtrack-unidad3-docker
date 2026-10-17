@@ -1,21 +1,17 @@
-.env
-
-# Archivos privados y generados
+# Credenciales y archivos de configuración privados
 .env
 **/.env
 **/.env.*
 !**/.env.example
+
+# Dependencias y archivos generados
 **/node_modules/
 **/dist/
+**/.angular/
+**/coverage/
+*.log
+
+# Respaldos locales
 **/.labtrack-backups/
 **/*.bak*
 **/*.respaldo
-
-# Unidad III
-.env.unidad3
-**/.env
-**/.env.*
-**/node_modules/
-**/dist/
-**/*.bak*
-.labtrack-backups/
