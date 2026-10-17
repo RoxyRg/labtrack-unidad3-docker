@@ -5,6 +5,6 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(AuthService);
   const token = auth.token();
   // Adjuntar el token solo a la API local del proyecto.
-  if (!token || !req.url.startsWith('http://127.0.0.1:3002/')) return next(req);
+  if (!token || !req.url.startsWith('/api/')) return next(req);
   return next(req.clone({ setHeaders: { Authorization: `Bearer ${token}` } }));
 };

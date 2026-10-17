@@ -1,531 +1,555 @@
-# LabTrack — Sistema de préstamo de equipo de laboratorio
+# LabTrack — Despliegue con Docker Compose
 
-<p align="center"><strong>Universidad Tecnológica del Norte de Guanajuato (UTNG)</strong></p>
+**Universidad Tecnológica del Norte de Guanajuato (UTNG)**
 
-| Datos de la actividad | Información |
+| Datos de la práctica | Información |
 |---|---|
-| **Alumno** | Méndez Fernández Alan Eusebio |
-| **Carrera** | Ingeniería en Redes Inteligentes y Ciberseguridad |
-| **Grupo** | GIRI6091 |
-| **Número de control** | 1223100825 |
-| **Materia** | Automatización de Infraestructura Digital I |
-| **Unidad** | II — Diseño y desarrollo de software |
-| **Modalidad** | Evaluación ordinaria |
-| **Caso de estudio** | LabTrack: Sistema de préstamo de equipo de laboratorio |
-| **Fecha de elaboración** | Octubre de 2026 |
+| Alumno | Méndez Fernández Alan Eusebio |
+| Carrera | Ingeniería en Redes Inteligentes y Ciberseguridad |
+| Grupo | GIRI6091 |
+| Número de control | 1223100825 |
+| Materia | Automatización de Infraestructura Digital I |
+| Unidad | III — Interfaces de programación de aplicaciones en la automatización de redes |
+| Actividad | Guía de instalación y configuración de una aplicación |
+| Caso de estudio | LabTrack, sistema de préstamo de equipo de laboratorio |
+| Fecha | Octubre de 2026 |
 
 ## Contenido
 
 1. [Introducción](#1-introducción)
-2. [Objetivo y problema que resuelve](#2-objetivo-y-problema-que-resuelve)
-3. [Herramientas y arquitectura](#3-herramientas-y-arquitectura)
-4. [Estructura del proyecto](#4-estructura-del-proyecto)
-5. [Base de datos y relaciones](#5-base-de-datos-y-relaciones)
-6. [Funciones del sistema](#6-funciones-del-sistema)
-7. [Instalación y ejecución en Linux](#7-instalación-y-ejecución-en-linux)
-8. [API y control de acceso](#8-api-y-control-de-acceso)
-9. [Pruebas y resultados](#9-pruebas-y-resultados)
-10. [Evidencias de funcionamiento](#10-evidencias-de-funcionamiento)
-11. [Relación con la rúbrica](#11-relación-con-la-rúbrica)
-12. [Dificultades y soluciones](#12-dificultades-y-soluciones)
+2. [Objetivo](#2-objetivo)
+3. [Punto de partida y herramientas](#3-punto-de-partida-y-herramientas)
+4. [Estructura y funcionamiento de los contenedores](#4-estructura-y-funcionamiento-de-los-contenedores)
+5. [Instalación paso a paso](#5-instalación-paso-a-paso)
+6. [Compilación y pruebas](#6-compilación-y-pruebas)
+7. [Límites de recursos](#7-límites-de-recursos)
+8. [Prueba del préstamo desde el navegador](#8-prueba-del-préstamo-desde-el-navegador)
+9. [Persistencia y prueba de carga](#9-persistencia-y-prueba-de-carga)
+10. [Evidencias de la práctica](#10-evidencias-de-la-práctica)
+11. [Dificultades que encontré](#11-dificultades-que-encontré)
+12. [Relación con la lista de cotejo](#12-relación-con-la-lista-de-cotejo)
 13. [Conclusión](#13-conclusión)
-14. [Fuentes consultadas](#14-fuentes-consultadas)
+14. [Referencias](#14-referencias)
 
 ---
 
 ## 1. Introducción
 
-En esta unidad desarrollé **LabTrack**, una aplicación web para llevar el control de los equipos que se prestan en un laboratorio de cómputo. El caso que trabajé parte de un problema sencillo: cuando los préstamos se anotan en una libreta o en una hoja de Excel, se vuelve difícil saber qué material está disponible, quién lo tiene y cuándo lo debe devolver. Si no se actualizan los registros a tiempo, un mismo equipo podría ofrecerse a varias personas o un préstamo vencido podría pasar desapercibido.
+En la Unidad II desarrollé LabTrack, una aplicación para controlar los préstamos de equipo en un laboratorio. Ya tenía el registro de usuarios, los permisos de administrador y solicitante, el inventario y las solicitudes de préstamo. El sistema funcionaba, pero para ponerlo en marcha tenía que abrir varias terminales: una para Angular, otra para NestJS y otra para revisar PostgreSQL.
 
-Para resolverlo trabajé con **Angular en el frontend, NestJS en el backend y PostgreSQL como base de datos**. Separé las funciones de dos tipos de usuario: el **SOLICITANTE**, que consulta el catálogo y realiza solicitudes, y el **ADMIN**, que organiza el inventario y se encarga de aprobar, entregar y recibir el material.
+En esta unidad trabajé en una manera más ordenada de ejecutarlo. Preparé los archivos necesarios para levantar el sistema con **Docker Compose**, de modo que cada parte se ejecute en su propio contenedor y se comunique con las demás por una red interna. También configuré límites de memoria y procesador, comprobaciones de salud y un volumen para guardar la información de PostgreSQL.
 
-Primero preparé los proyectos y la base de datos; después fui construyendo la autenticación, las operaciones del inventario y el flujo de préstamos. Al final conecté todo con las pantallas de Angular. Durante el desarrollo no me limité a comprobar que la página abriera: también revisé las respuestas de la API, los permisos por rol y los cambios de estado de los equipos. Guardé capturas de la interfaz y resultados de las pruebas para documentar el trabajo.
+Partí del código que ya había terminado en la Unidad II. No cambié la idea del sistema ni volví a programar los préstamos desde cero. Mi trabajo se centró en preparar el despliegue, solucionar los problemas que aparecieron durante la compilación y comprobar que la aplicación siguiera funcionando desde Firefox. Las capturas que agregué son de las ejecuciones que hice en mi equipo Linux.
 
-## 2. Objetivo y problema que resuelve
+## 2. Objetivo
 
-Mi objetivo fue **desarrollar y comprobar una aplicación funcional, conectada a una API y a una base de datos**, siguiendo el caso de estudio de la Unidad II.
+Mi objetivo fue **desplegar LabTrack con Docker Compose y comprobar la comunicación entre el frontend, el backend y la base de datos**.
 
-Con LabTrack busqué que:
+Para realizarlo necesitaba:
 
-- Un alumno o docente pueda registrarse, iniciar sesión y solicitar uno o varios equipos disponibles.
-- El solicitante pueda consultar su historial y modificar o cancelar una solicitud mientras siga pendiente.
-- El encargado pueda registrar categorías y equipos, actualizar información y realizar bajas lógicas.
-- El administrador pueda aprobar, rechazar, entregar y recibir préstamos, sin perder el historial.
-- La aplicación impida que un equipo reservado o prestado se asigne de nuevo por error.
-- Los usuarios tengan menús diferentes y la API verifique los permisos, no solamente la interfaz.
+- Construir las imágenes de Angular y NestJS con sus respectivas dependencias.
+- Ejecutar PostgreSQL sin mezclar sus datos con los de las otras unidades.
+- Configurar la red interna, el acceso desde el navegador y las variables de entorno.
+- Establecer límites de CPU, memoria y procesos para los tres servicios.
+- Comprobar la API, el inicio de sesión y el préstamo completo de un equipo.
+- Guardar los archivos de configuración y las evidencias para repetir el procedimiento.
 
-## 3. Herramientas y arquitectura
+## 3. Punto de partida y herramientas
 
-### 3.1 Tecnologías que utilicé
+Utilicé la aplicación LabTrack que ya tenía funcionando de la Unidad II. Para esta actividad saqué una copia en una carpeta independiente y trabajé en la rama `unidad3-docker`, conservando el repositorio anterior como referencia.
 
-| Tecnología | Versión comprobada o utilizada | Para qué la utilicé |
-|---|---|---|
-| Angular | 21.2.25 (CLI 21.2.27) | Formularios, catálogo, navegación y pantallas |
-| NestJS | 11 | API REST, autenticación, lógica y permisos |
-| TypeScript | 5.9.3 | Código del frontend y del backend |
-| Node.js | 20.20.2 | Ejecución de herramientas y backend |
-| npm | 10.8.2 en el sistema; 11.6.2 de manera temporal durante algunas instalaciones | Dependencias y comandos del proyecto |
-| PostgreSQL | 16, imagen `postgres:16-alpine` | Almacenamiento del sistema |
-| Prisma ORM | 6.19.0 | Modelos, consultas y migraciones |
-| Docker / Compose | Docker 29.9.1; Compose v5.5.1 | Base de datos aislada |
-| Git | 2.43.0 | Control de versiones |
-| Jest y Vitest | Herramientas del backend y frontend, respectivamente | Pruebas automatizadas iniciales |
-
-Trabajé desde Linux. Utilicé Visual Studio Code para revisar el código y Docker Desktop con el contexto `desktop-linux` para ejecutar PostgreSQL.
-
-> **Cómo lo ejecuté:** levanté PostgreSQL con Docker Compose y trabajé con Angular y NestJS directamente desde Linux. Todavía no configuré contenedores para el frontend ni para el backend.
-
-### 3.2 Cómo se comunican los componentes
-
-```mermaid
-flowchart LR
-    U[Usuario en navegador] --> A[Angular\n127.0.0.1:4202]
-    A --> B[NestJS API\n127.0.0.1:3002]
-    B --> P[Prisma ORM]
-    P --> D[(PostgreSQL\n127.0.0.1:5543)]
-    DC[Docker Compose\nlabtrack-unidad2] --> D
-```
-
-El navegador envía las peticiones a NestJS. La API valida el token y los permisos, aplica las reglas del préstamo y utiliza Prisma para guardar o consultar la información de PostgreSQL. El frontend no se conecta directamente a la base de datos.
-
-Los puertos locales que utilicé para LabTrack son:
-
-| Componente | Dirección |
+| Herramienta | Uso en esta unidad |
 |---|---|
-| Frontend | `http://127.0.0.1:4202` |
-| Backend | `http://127.0.0.1:3002` |
-| Verificación de base de datos | `http://127.0.0.1:3002/health/db` |
-| PostgreSQL | `127.0.0.1:5543` (redirigido al puerto 5432 del contenedor) |
+| Linux | Sistema desde el que preparé y probé el despliegue |
+| Docker Desktop / Docker Engine 29.9.1 | Creación y ejecución de los contenedores |
+| Docker Compose v5.5.1 | Inicio y coordinación de los tres servicios |
+| Node.js 20 | Compilación de Angular y NestJS dentro de las imágenes |
+| npm 11.6.2 | Instalación reproducible de dependencias durante la construcción |
+| Angular 21 | Interfaz de LabTrack |
+| Nginx | Publicación de Angular y comunicación con la API |
+| NestJS 11 | Autenticación, permisos e información de préstamos |
+| Prisma 6.19.0 | Consultas y migraciones de la base de datos |
+| PostgreSQL 16 | Almacenamiento de usuarios, equipos y préstamos |
+| Git | Seguimiento de los cambios de esta unidad |
 
-Dejé estos puertos y los recursos de Docker separados de los demás proyectos que tenía en mi computadora.
+En mi computadora utilicé el contexto `desktop-linux`. Separé esta práctica de la banca web y de los proyectos anteriores: Compose utiliza el nombre `labtrack-unidad3`, otra red y otro volumen de datos.
 
-## 4. Estructura del proyecto
+### 3.1 Organización de los archivos
 
 ```text
-labtrack-unidad2/
-├── frontend/
-│   ├── src/
-│   │   └── app/
-│   │       ├── core/                 # Autenticación, modelos, API, interceptores y guards
-│   │       ├── pages/                # Pantallas de ambos roles
-│   │       └── app.routes.ts         # Rutas Angular
-│   ├── angular.json
-│   └── package.json
+labtrack-unidad3/
 ├── backend/
+│   ├── Dockerfile.unidad3
+│   ├── .dockerignore
 │   ├── prisma/
-│   │   ├── schema.prisma             # Modelos y relaciones
-│   │   └── migrations/              # Migraciones SQL
-│   ├── src/
-│   │   ├── auth/                    # Registro e inicio de sesión
-│   │   ├── security/                # JWT y permisos por rol
-│   │   ├── prisma/                  # Conexión desde NestJS
-│   │   ├── health/                   # Comprobación de la BD
-│   │   ├── categorias/              # CRUD de categorías
-│   │   ├── equipos/                 # CRUD de inventario
-│   │   └── prestamos/               # Solicitudes y cambios de estado
-│   ├── scripts/                     # Pruebas y creación controlada de ADMIN
-│   └── package.json
+│   │   ├── schema.prisma
+│   │   └── migrations/
+│   └── src/
+├── frontend/
+│   ├── Dockerfile.unidad3
+│   ├── .dockerignore
+│   ├── nginx/
+│   │   └── default.conf
+│   └── src/app/
+├── compose.unidad3.yml
 ├── evidencias/
-│   ├── capturas/                    # Imágenes reales de la práctica
-│   └── salidas/                     # Resumen de salidas que obtuve en la terminal
-├── compose.yml                     # PostgreSQL para LabTrack
+│   └── unidad3/
+│       └── capturas/
 ├── .gitignore
 └── README.md
 ```
 
-Esta organización me permitió probar primero la API y después conectarla con Angular. Los archivos de credenciales `.env`, los directorios `node_modules` y las compilaciones `dist` **no deben publicarse**.
+El archivo `compose.yml` que venía de la Unidad II puede seguir en la carpeta, pero **para esta actividad utilicé `compose.unidad3.yml`**. Así evité arrancar por equivocación la configuración de la práctica anterior.
 
-## 5. Base de datos y relaciones
+## 4. Estructura y funcionamiento de los contenedores
 
-Respeté las cinco tablas principales del diagrama del caso de estudio que proporcionó el profesor:
-
-| Tabla | Información que guarda |
-|---|---|
-| `usuarios` | Nombre, matrícula, correo, contraseña cifrada, rol y estado de la cuenta |
-| `categorias` | Clasificación del material |
-| `equipos` | Código de inventario, nombre, marca, modelo, número de serie, categoría y estado |
-| `prestamos` | Solicitante, administrador que atiende, fechas previstas, motivo y estado |
-| `detalle_prestamo` | Equipos que forman parte de cada préstamo y observaciones |
+Preparé tres servicios. El navegador entra por Nginx; Nginx muestra Angular y envía las peticiones `/api/` a NestJS; NestJS utiliza Prisma para consultar PostgreSQL.
 
 ```mermaid
-erDiagram
-    USUARIOS ||--o{ PRESTAMOS : solicita
-    USUARIOS ||--o{ PRESTAMOS : atiende
-    CATEGORIAS ||--o{ EQUIPOS : clasifica
-    PRESTAMOS ||--|{ DETALLE_PRESTAMO : incluye
-    EQUIPOS ||--o{ DETALLE_PRESTAMO : aparece_en
+flowchart TB
+    N[Navegador\n127.0.0.1:4303] --> F[frontend\nAngular + Nginx]
+    F -->|/api/| B[backend\nNestJS + Prisma]
+    B -->|db:5432| D[(db\nPostgreSQL 16)]
+    D --- V[(Volumen de datos\nlabtrack_u3_pgdata)]
 ```
 
-Un solicitante puede hacer varios préstamos y un administrador puede atender muchos. Una categoría agrupa varios equipos. La relación de muchos a muchos entre préstamos y equipos se guarda por medio de `detalle_prestamo`.
+Los contenedores están conectados mediante la red `labtrack_u3_interna`. Solo el frontend publica un puerto en mi computadora (`127.0.0.1:4303`). El backend y PostgreSQL se mantienen accesibles por la red de Docker, sin publicar sus puertos hacia el host.
 
-Usé los nombres del diagrama y agregué algunos campos de apoyo para el funcionamiento: `activo` en equipos para la **baja lógica**, y `entregado_en` / `devuelto_en` para distinguir las fechas reales de las fechas previstas. También contemplé un estado de mantenimiento para el inventario. Las migraciones quedaron dentro de `backend/prisma/migrations/`.
+### 4.1 Contenedor `db`: PostgreSQL
 
-### Estados de equipos y préstamos
+Utilicé la imagen `postgres:16-alpine`. El servicio crea la base `labtrack_db`, utiliza el usuario `labtrack` y toma la contraseña de un archivo privado `.env.unidad3`.
 
-El equipo puede estar **DISPONIBLE**, **RESERVADO**, **PRESTADO** o en **MANTENIMIENTO**. El préstamo recorre los estados permitidos según la acción realizada:
+En `compose.unidad3.yml` dejé configurados:
 
-```text
-PENDIENTE ── aprobar ──> APROBADO ── entregar ──> ENTREGADO ── devolver ──> DEVUELTO
-    ├─────── rechazar ──> RECHAZADO
-    └─────── cancelar ──> CANCELADO
-```
+- Volumen `labtrack_u3_pgdata`, para conservar los registros.
+- Red `labtrack_u3_interna`, para comunicarse con NestJS.
+- Un **healthcheck** con `pg_isready`, para comprobar que PostgreSQL acepta conexiones.
+- Límites de CPU, memoria y procesos.
 
-Una solicitud pendiente se puede editar o cancelar por su dueño. Cuando el ADMIN la aprueba, el equipo cambia de `DISPONIBLE` a `RESERVADO`; al entregarlo pasa a `PRESTADO`, y al registrar la devolución vuelve a `DISPONIBLE`. Los préstamos vencidos se consultan a partir de la fecha prevista de devolución cuando continúan entregados.
+El contenedor no tiene un `Dockerfile` propio porque utilicé directamente la imagen oficial de PostgreSQL. La configuración se encuentra en [`compose.unidad3.yml`](compose.unidad3.yml).
 
-## 6. Funciones del sistema
+### 4.2 Contenedor `backend`: NestJS y Prisma
 
-### 6.1 Inicio de sesión y registro
+Para la API utilicé [`backend/Dockerfile.unidad3`](backend/Dockerfile.unidad3). La imagen se construye a partir de Node.js 20 y separa la etapa de compilación de la etapa de ejecución.
 
-Implementé registro e inicio de sesión con correo y contraseña. El registro público crea únicamente usuarios **SOLICITANTE**. La contraseña se almacena como un hash con bcrypt, no como texto plano. Al iniciar sesión, NestJS genera un token JWT y Angular lo utiliza para realizar solicitudes autenticadas.
+Durante la construcción se instalan las dependencias con `npm ci`, se genera el cliente Prisma, se compila NestJS y se ejecuta Jest. La imagen final contiene los archivos compilados, Prisma y las dependencias necesarias.
 
-La cuenta **ADMIN** se crea de forma controlada mediante un script local; no existe una opción pública para registrarse con ese rol. Para esta práctica comprobé ambos accesos con usuarios distintos.
+Al iniciar el contenedor se aplica `prisma migrate deploy` y después se ejecuta NestJS. La conexión utiliza `db:5432` en lugar de `localhost`, porque PostgreSQL está dentro de otro contenedor. El backend escucha internamente en el puerto **3002**.
 
-![Interfaz de inicio de sesión de LabTrack](evidencias/capturas/06_inicio_sesion.png)
+El healthcheck consulta `/health/db`. Compose espera a que PostgreSQL esté saludable antes de iniciar el backend.
 
-### 6.2 Menús según el rol
+### 4.3 Contenedor `frontend`: Angular y Nginx
 
-El menú del solicitante contiene **Catálogo**, **Solicitar** y **Mis préstamos**. El del administrador incluye **Catálogo**, **Panel**, **Equipos**, **Categorías** y **Préstamos**. Angular utiliza guards para la navegación, mientras que NestJS aplica los permisos reales mediante JWT y comprobación de roles.
+Preparé [`frontend/Dockerfile.unidad3`](frontend/Dockerfile.unidad3). La primera etapa utiliza Node.js para instalar las dependencias, compilar Angular y ejecutar sus pruebas con Vitest. La segunda etapa utiliza `nginx:stable-alpine` para servir los archivos estáticos.
 
-| SOLICITANTE | ADMIN |
-|---|---|
-| Consultar equipos | Consultar equipos e inventario |
-| Crear solicitudes | Dar de alta y editar categorías y equipos |
-| Consultar sus propios préstamos | Dar de baja equipos sin borrar el historial |
-| Editar o cancelar solicitudes pendientes | Aprobar, rechazar, entregar y recibir préstamos |
-| | Consultar totales y préstamos vencidos |
+En [`frontend/nginx/default.conf`](frontend/nginx/default.conf) configuré dos comportamientos:
 
-### 6.3 Categorías y equipos
+- Al entrar a una ruta de Angular, Nginx entrega `index.html` para que el navegador pueda navegar por las pantallas.
+- Cuando Angular llama a `/api/`, Nginx envía la solicitud a `http://backend:3002/` por la red de Docker.
 
-Desde la administración registré categorías y equipos y probé las operaciones de consulta, edición y eliminación. Para los equipos utilicé **baja lógica**: el registro se conserva, pero deja de aparecer como equipo activo del catálogo. También comprobé que una categoría asociada a equipos no pueda eliminarse sin antes resolver esa relación.
+También actualicé los dos servicios de Angular que tenían la dirección antigua `127.0.0.1:3002`, y después corregí el interceptor JWT para que adjuntara el token a las peticiones `/api/`.
 
-![Gestión de categorías desde Angular](evidencias/capturas/08_categorias.png)
+### 4.4 Archivo de orquestación
 
-![Gestión de equipos e inventario](evidencias/capturas/09_equipos.png)
+Toda la configuración principal está en [`compose.unidad3.yml`](compose.unidad3.yml). Ahí definí los servicios `db`, `backend` y `frontend`, sus dependencias, healthchecks, límites de recursos, volumen y red.
 
-### 6.4 Solicitudes de préstamo
+No publiqué contraseñas dentro de Compose. Las variables que utiliza son `LABTRACK_DB_PASSWORD` y `LABTRACK_JWT_SECRET`, que se leen del archivo privado `.env.unidad3`.
 
-El solicitante puede seleccionar entre **1 y 20 equipos distintos**, indicar fecha de salida, fecha prevista de devolución y motivo. La solicitud inicia como `PENDIENTE`. Mientras esté pendiente puede editarla o cancelarla. Cuando el encargado la atiende, ya no se permiten esas modificaciones.
+## 5. Instalación paso a paso
 
-![Formulario de nueva solicitud](evidencias/capturas/13_nueva_solicitud.png)
+Estos son los pasos que seguí para ejecutar el proyecto en Linux. Para repetirlos hacen falta Git, Docker Engine o Docker Desktop, Docker Compose y acceso a Internet durante la descarga de las imágenes y dependencias.
 
-![Edición de una solicitud pendiente](evidencias/capturas/16_edicion_solicitud.png)
+### 5.1 Descargar y entrar al proyecto
 
-![Cancelación confirmada de una solicitud](evidencias/capturas/15_cancelacion.png)
-
-### 6.5 Gestión administrativa de préstamos
-
-Desde el panel del ADMIN comprobé los cambios de estado. Primero aprobé una solicitud pendiente; después registré la entrega y, finalmente, la devolución. El sistema actualizó el préstamo y la disponibilidad del equipo en cada operación. También probé un conflicto de doble reserva, que la API rechazó con HTTP `409`.
-
-![Solicitud pendiente en la administración](evidencias/capturas/17_prestamo_pendiente.png)
-
-![Préstamo aprobado y equipo reservado](evidencias/capturas/18_prestamo_aprobado.png)
-
-![Préstamo entregado](evidencias/capturas/19_prestamo_entregado.png)
-
-![Préstamo devuelto y finalizado](evidencias/capturas/20_prestamo_devuelto.png)
-
-## 7. Instalación y ejecución en Linux
-
-Para repetir la práctica utilizo tres terminales: una para preparar PostgreSQL, otra para NestJS y otra para Angular. El proyecto requiere **Node.js 20.19 o posterior compatible con Angular 21**, npm, Docker con Compose y Git. En mi equipo comprobé Node.js `20.20.2`.
-
-### 7.1 Obtener el proyecto
-
-Subí el proyecto a [mi repositorio de GitHub](https://github.com/RoxyRg/labtrack-unidad2). Para descargarlo en otra computadora uso:
+Desde GitHub se puede descargar el repositorio de esta unidad utilizando el botón **Code** y la opción de clonar. Después se entra a la carpeta del proyecto:
 
 ```bash
-git clone https://github.com/RoxyRg/labtrack-unidad2.git
-cd labtrack-unidad2
+cd ~/proyectos/labtrack-unidad3
 ```
 
-En mi computadora ya tengo la carpeta en `~/proyectos/labtrack-unidad2`, así que puedo entrar directamente a ella.
+> En mi caso, la carpeta de la Unidad III la preparé a partir del repositorio de la Unidad II. Para publicar esta actividad se debe utilizar un repositorio independiente y conservar los archivos de Docker junto con el código.
 
-### 7.2 Configurar contraseñas locales
+### 5.2 Preparar las variables privadas
 
-El proyecto utiliza dos archivos privados: `.env` en la raíz, para PostgreSQL, y `backend/.env`, para la conexión y el secreto JWT. Para una instalación nueva puedo generarlos con el siguiente bloque, que no imprime las contraseñas y se detiene si ya existen:
+En la raíz del proyecto utilicé `.env.unidad3` para guardar la contraseña de PostgreSQL y el secreto de los JWT. Para una instalación nueva se pueden generar sin mostrarlos en la terminal:
 
 ```bash
 python3 - <<'PY'
 from pathlib import Path
-from urllib.parse import quote
 import secrets
 
-raiz = Path('.env')
-backend = Path('backend/.env')
-if raiz.exists() or backend.exists():
-    raise SystemExit('Ya hay archivos .env; revisarlos sin sobrescribirlos.')
+archivo = Path('.env.unidad3')
+if archivo.exists():
+    raise SystemExit('Ya existe .env.unidad3. No se sobrescribió.')
 
-clave_db = secrets.token_hex(18)
-clave_jwt = secrets.token_hex(32)
-raiz.write_text(f'LABTRACK_DB_PASSWORD={clave_db}\n')
-backend.write_text(
-    'DATABASE_URL="postgresql://labtrack:'
-    + quote(clave_db, safe='')
-    + '@127.0.0.1:5543/labtrack_db?schema=public"\n'
-    + f'JWT_SECRET={clave_jwt}\n'
-    + 'PORT=3002\nHOST=127.0.0.1\n'
+archivo.write_text(
+    f'LABTRACK_DB_PASSWORD={secrets.token_hex(24)}\n'
+    f'LABTRACK_JWT_SECRET={secrets.token_hex(32)}\n'
 )
-raiz.chmod(0o600)
-backend.chmod(0o600)
-print('Configuración local creada; las credenciales no se mostraron.')
+archivo.chmod(0o600)
+print('Credenciales locales creadas.')
 PY
 ```
 
-**Importante:** verifico que los archivos `.env` estén ignorados por Git. No publico contraseñas, tokens JWT ni sesiones de los usuarios.
+Este archivo no debe subirse a GitHub. La base de datos y las cuentas que tenía en la Unidad II permanecen separadas.
 
-### 7.3 Iniciar PostgreSQL con Docker Compose
-
-Desde la carpeta principal:
+### 5.3 Comprobar Docker y la configuración
 
 ```bash
 docker context show
-docker compose -f compose.yml config --quiet
-docker compose -f compose.yml up -d db
-docker compose -f compose.yml ps -a
+docker --version
+docker compose version
+
+docker compose --env-file .env.unidad3 \
+  -f compose.unidad3.yml config --quiet
 ```
 
-Para consultar la base de datos desde el contenedor:
+La validación de Compose terminó sin errores. Antes de desplegar la aplicación confirmé también que el puerto local **4303** no estaba ocupado.
+
+### 5.4 Construir las imágenes
 
 ```bash
-docker compose -f compose.yml exec -T db \
-  psql -U labtrack -d labtrack_db \
-  -c 'SELECT current_database(), current_user;'
+docker compose --env-file .env.unidad3 \
+  -f compose.unidad3.yml build frontend
+
+docker compose --env-file .env.unidad3 \
+  -f compose.unidad3.yml build backend
 ```
 
-El proyecto usa la base `labtrack_db`, usuario `labtrack` y el puerto local `5543`. El contenedor dispone de un volumen propio para conservar la información después de reiniciarlo. **No elimino el volumen al detener la aplicación**, ya que ahí se encuentran los registros y préstamos.
+Primero encontré un error de npm al construir Angular; después de corregirlo, las dos imágenes terminaron su construcción correctamente. Durante el proceso se ejecutaron la compilación y las pruebas que están definidas en los Dockerfiles.
 
-### 7.4 Preparar y ejecutar el backend
-
-En otra terminal:
+### 5.5 Arrancar los servicios
 
 ```bash
-cd backend
-npx --yes npm@11.6.2 ci --no-audit --no-fund
-./node_modules/.bin/prisma validate
-./node_modules/.bin/prisma migrate deploy
-./node_modules/.bin/prisma generate
-npm run build
-npm run start:dev
+docker compose --env-file .env.unidad3 \
+  -f compose.unidad3.yml up -d
+
+docker compose --env-file .env.unidad3 \
+  -f compose.unidad3.yml ps -a
 ```
 
-`prisma migrate deploy` aplica las migraciones que ya están guardadas en el repositorio, sin generar un esquema nuevo. Al terminar, la API debe quedar disponible en `http://127.0.0.1:3002`.
+Al ejecutar `up -d`, Compose creó la red privada y el volumen de PostgreSQL. En la comprobación final los tres servicios aparecieron en estado **healthy**.
 
-Para comprobar la conexión desde NestJS, en una terminal diferente:
+![Arranque de los contenedores](evidencias/unidad3/capturas/01_docker_compose_arranque.png)
+
+### 5.6 Comprobar la API y el frontend
+
+Desde una terminal consulté la ruta de salud de LabTrack:
 
 ```bash
-curl -i http://127.0.0.1:3002/health/db
+curl -i http://127.0.0.1:4303/api/health/db
 ```
 
-En mi práctica recibí `HTTP 200` y el nombre `labtrack_db`. La ruta `/health/db` es una comprobación para desarrollo; antes de un despliegue público se debe limitar la información que devuelve.
+Obtuve **HTTP 200** y una respuesta con `estado: ok` y el nombre `labtrack_db`. Al principio aparecían cero usuarios porque la base nueva aún no tenía cuentas registradas.
 
-### 7.5 Preparar y ejecutar Angular
+![Respuesta de la base de datos desde la API](evidencias/unidad3/capturas/03_api_base_datos_http_200.png)
 
-Con el backend encendido, desde otra terminal:
+También comprobé el frontend y la protección de una ruta privada:
 
 ```bash
-cd frontend
-npx --yes npm@11.6.2 ci --no-audit --no-fund
-npm run build
-npx ng serve --host 127.0.0.1 --port 4202
+curl -sS -o /dev/null -w 'Frontend HTTP: %{http_code}\n' \
+  http://127.0.0.1:4303/
+
+curl -sS -o /dev/null -w 'Ruta protegida HTTP: %{http_code}\n' \
+  http://127.0.0.1:4303/api/auth/me
 ```
 
-Abro `http://127.0.0.1:4202/` y puedo entrar por el formulario de inicio de sesión o registrar un solicitante nuevo. La dirección de la API se encuentra configurada para uso local en los servicios Angular (`frontend/src/app/core/`). Si se utiliza otro host o puerto, es necesario ajustar esa configuración.
+El frontend respondió **200** y la ruta sin token respondió **401**, que es el comportamiento esperado.
 
-### 7.6 Crear el administrador y trabajar con los roles
+![Comprobaciones HTTP de frontend y autenticación](evidencias/unidad3/capturas/04_frontend_200_y_ruta_401.png)
 
-El registro público permite crear solicitantes. Para crear un ADMIN por primera vez utilizo `backend/scripts/crear_admin.cjs`, **siempre desde el backend y sin dejar credenciales escritas en el README**:
+### 5.7 Acceso desde Firefox
+
+La dirección que utilicé fue:
+
+**http://127.0.0.1:4303**
+
+Desde ahí pude abrir la pantalla de inicio de sesión, registrar un solicitante y entrar con una cuenta ADMIN. Para crear el administrador de una instalación nueva utilicé el script local `backend/scripts/crear_admin.cjs`, ejecutándolo en un contenedor auxiliar de Compose:
 
 ```bash
-cd backend
-read -r -p 'Nombre ADMIN: ' LABTRACK_ADMIN_NOMBRE
-read -r -p 'Correo ADMIN: ' LABTRACK_ADMIN_CORREO
+read -r -p 'Nombre del ADMIN: ' LABTRACK_ADMIN_NOMBRE
+read -r -p 'Correo del ADMIN: ' LABTRACK_ADMIN_CORREO
 read -r -s -p 'Contraseña ADMIN: ' LABTRACK_ADMIN_PASSWORD; echo
 export LABTRACK_ADMIN_NOMBRE LABTRACK_ADMIN_CORREO LABTRACK_ADMIN_PASSWORD
-node --env-file=.env scripts/crear_admin.cjs
+
+docker compose --env-file .env.unidad3 \
+  -f compose.unidad3.yml run --rm --no-deps \
+  -v "$(pwd)/backend/scripts:/app/scripts:ro" \
+  -e LABTRACK_ADMIN_NOMBRE \
+  -e LABTRACK_ADMIN_CORREO \
+  -e LABTRACK_ADMIN_PASSWORD \
+  backend node scripts/crear_admin.cjs
+
 unset LABTRACK_ADMIN_NOMBRE LABTRACK_ADMIN_CORREO LABTRACK_ADMIN_PASSWORD
 ```
 
-El script verifica que el correo no exista previamente. La contraseña debe cumplir los requisitos de seguridad definidos en el script. Una vez creada la cuenta, inicio sesión desde Angular y compruebo que aparezca el menú administrativo.
+No dejé contraseñas reales escritas en este documento ni las incorporé a los archivos del repositorio.
 
-### 7.7 Apagar solo los servicios de LabTrack
+### 5.8 Detener LabTrack sin borrar información
 
-Cuando termino de trabajar, detengo Angular y NestJS con `Ctrl+C` en sus respectivas terminales. La base de datos la puedo detener sin borrar su información mediante:
+Para apagar solamente esta práctica:
 
 ```bash
-# Ejecutar desde la raíz labtrack-unidad2
-docker compose -f compose.yml down
+docker compose --env-file .env.unidad3 \
+  -f compose.unidad3.yml down
 ```
 
-No utilizo `down -v`, porque eliminaría el volumen de PostgreSQL. Tampoco detengo los contenedores de mis otros proyectos.
+**No utilizo `down -v`** porque ese comando también eliminaría el volumen de PostgreSQL y sus registros.
 
-## 8. API y control de acceso
+## 6. Compilación y pruebas
 
-### 8.1 Endpoints de autenticación
+En el instrumento se solicitan pruebas de cada parte del proyecto. Estas son las comprobaciones que realicé durante la preparación del despliegue.
 
-| Método | Ruta | Función |
-|---|---|---|
-| `POST` | `/auth/register` | Registrar SOLICITANTE |
-| `POST` | `/auth/login` | Iniciar sesión y recibir JWT |
-| `GET` | `/auth/me` | Consultar usuario autenticado |
-| `GET` | `/auth/admin-test` | Verificar permiso ADMIN |
-
-### 8.2 Endpoints de categorías y equipos
-
-| Método | Ruta | Acceso |
-|---|---|---|
-| `GET` | `/categorias` y `/categorias/:id` | Usuario autenticado |
-| `POST`, `PATCH`, `DELETE` | `/categorias` / `/categorias/:id` | ADMIN |
-| `GET` | `/equipos` y `/equipos/:id` | Usuario autenticado |
-| `POST` | `/equipos` | ADMIN |
-| `PATCH`, `DELETE` | `/equipos/:id` | ADMIN |
-| `PATCH` | `/equipos/:id/estado` | ADMIN (mantenimiento/disponible) |
-
-El listado de equipos admite filtros por búsqueda, categoría y estado. Las bajas lógicas permiten conservar los registros de préstamos anteriores.
-
-### 8.3 Endpoints de préstamos
-
-| Método | Ruta | Acceso |
-|---|---|---|
-| `POST` | `/prestamos` | SOLICITANTE |
-| `GET` | `/prestamos/mios` | SOLICITANTE |
-| `GET` | `/prestamos/:id` | Propietario o ADMIN |
-| `PATCH` | `/prestamos/:id` | Propietario, solo si está pendiente |
-| `PATCH` | `/prestamos/:id/cancelar` | Propietario, solo si está pendiente |
-| `GET` | `/prestamos` | ADMIN |
-| `GET` | `/prestamos/vencidos` | ADMIN |
-| `PATCH` | `/prestamos/:id/aprobar` | ADMIN |
-| `PATCH` | `/prestamos/:id/rechazar` | ADMIN |
-| `PATCH` | `/prestamos/:id/entregar` | ADMIN |
-| `PATCH` | `/prestamos/:id/devolver` | ADMIN |
-
-Los endpoints reciben y devuelven JSON. El backend valida los datos que llegan y controla los cambios de estado. Las operaciones que afectan simultáneamente a préstamo y equipo utilizan transacciones en Prisma. En las pruebas comprobé que no se pudiera reservar por segunda vez el mismo equipo.
-
-## 9. Pruebas y resultados
-
-Hice pruebas por separado para localizar errores con mayor facilidad y luego comprobé el flujo completo desde las pantallas.
-
-| Prueba realizada | Resultado que obtuve |
+| Comprobación | Resultado observado |
 |---|---|
-| Conexión NestJS ↔ PostgreSQL | `HTTP 200`, base `labtrack_db` |
-| Validación de Prisma | Esquema válido; una migración aplicada y BD actualizada |
-| Registro de SOLICITANTE | `HTTP 201` |
-| Login de ambos roles | `HTTP 201` |
-| Acceso sin token | `HTTP 401` |
-| SOLICITANTE intenta entrar a una ruta ADMIN | `HTTP 403` |
-| Token inválido y contraseña equivocada | `HTTP 401` |
-| Pruebas de autenticación y roles del solicitante | **6 de 6** aprobadas |
-| Comprobaciones de acceso del ADMIN | **3 de 3** aprobadas |
-| CRUD de categorías y equipos | Operaciones y restricciones comprobadas mediante HTTP |
-| Categoría con equipos vinculados | Rechazo esperado `HTTP 409` al eliminar |
-| Flujo de préstamos | **27 de 27** verificaciones HTTP completadas |
-| Reserva duplicada | Rechazo esperado `HTTP 409` |
-| Angular (`npm run build`) | Compilación completa sin errores |
-| Vitest del frontend | **2 de 2** pruebas aprobadas |
-| Jest del backend | **1 de 1** prueba inicial aprobada |
-| Navegador, roles y préstamos | Capturas de solicitud, edición, cancelación, aprobación, entrega y devolución |
+| Validación de `compose.unidad3.yml` | Sin errores |
+| Instalación limpia del frontend | Corregida y terminada correctamente |
+| `npm run build` de Angular | Compilación exitosa |
+| Vitest de Angular | 2 pruebas aprobadas |
+| Construcción de la imagen frontend | Finalizada correctamente |
+| Compilación y Jest de NestJS dentro de Docker | Comandos finalizados sin error de construcción |
+| Construcción de la imagen backend | Finalizada correctamente |
+| Estado de los tres contenedores | Los tres llegaron a `healthy` |
+| `GET /api/health/db` | HTTP 200 |
+| `GET /` | HTTP 200 |
+| `GET /api/auth/me` sin JWT | HTTP 401 |
+| Acceso al sistema desde Firefox | Login, inventario y préstamos visibles |
 
-La prueba de Jest que tengo en el proyecto revisa la ruta inicial de NestJS, y las dos de Vitest comprueban que Angular puede crear el componente principal y mostrar el nombre LabTrack. Para las otras funciones usé los scripts de pruebas HTTP y también hice el recorrido desde el navegador.
+Las **dos pruebas de Vitest** comprueban el componente principal de Angular. La prueba inicial de **Jest** comprueba una ruta básica de NestJS. No las presento como pruebas de todos los préstamos: esa parte la comprobé por separado desde la aplicación y mediante las peticiones a la API.
 
-También guardé un [resumen de las salidas de pruebas](evidencias/salidas/resultados_pruebas.txt), transcrito de los resultados que obtuve en la terminal, sin contraseñas ni tokens. No es una ejecución adicional.
+## 7. Límites de recursos
 
-Los registros conservados durante la comprobación del flujo incluyen los préstamos 1, 2 y 3. Después realicé desde Angular otras solicitudes, incluida una que llegó a `DEVUELTO`, como muestran las capturas. En la última prueba observé que el equipo volvía a estar disponible.
+En el archivo Compose establecí límites para que los contenedores no utilicen todos los recursos de mi equipo.
 
-![Compilación final de Angular y 2/2 pruebas Vitest](evidencias/capturas/21_frontend_compilacion_y_tests.png)
+| Servicio | CPU máximo | Memoria máxima | Límite de procesos |
+|---|---:|---:|---:|
+| `frontend` | 0.5 CPU | 128 MiB | 128 |
+| `backend` | 1 CPU | 768 MiB | 256 |
+| `db` | 0.75 CPU | 512 MiB | 200 |
 
-## 10. Evidencias de funcionamiento
+Para ver el consumo ejecuté:
 
-Organicé las capturas siguiendo el orden en que fui preparando y probando LabTrack en mi equipo Linux.
+```bash
+docker stats --no-stream \
+  $(docker compose --env-file .env.unidad3 \
+    -f compose.unidad3.yml ps -q)
+```
 
-### 10.1 Preparación de entorno y base de datos
+En una de mis mediciones obtuve estos valores:
 
-| Evidencia | Qué muestra |
+| Servicio | Memoria utilizada | Límite de memoria | Porcentaje |
+|---|---:|---:|---:|
+| `backend` | 86.25 MiB | 768 MiB | 11.23 % |
+| `db` | 28.79 MiB | 512 MiB | 5.62 % |
+| `frontend` | 15.93 MiB | 128 MiB | 12.44 % |
+
+Los tres estaban por debajo del límite de memoria. Esta lectura corresponde a ese momento de la práctica; no significa que el consumo sea siempre igual.
+
+![Consumo y límites de Docker](evidencias/unidad3/capturas/07_consumo_recursos_docker_stats.png)
+
+## 8. Prueba del préstamo desde el navegador
+
+Con los tres servicios activos, entré al sistema en Firefox y repetí el recorrido del préstamo que había trabajado durante la Unidad II.
+
+**Primero entré como ADMIN.** Abrí las pantallas de categorías y equipos y comprobé que podía administrar el inventario. Registré material para trabajar con un equipo disponible.
+
+![Gestión de categorías](evidencias/unidad3/capturas/09_gestion_categorias_admin.png)
+
+![Equipo en inventario](evidencias/unidad3/capturas/08_gestion_equipos_admin.png)
+
+**Después entré como SOLICITANTE.** Revisé el catálogo, seleccioné el equipo, elegí las fechas y escribí el motivo del préstamo. La solicitud quedó pendiente y se mostró en mi historial.
+
+![Catálogo de equipos](evidencias/unidad3/capturas/10_catalogo_solicitante.png)
+
+![Nueva solicitud de préstamo](evidencias/unidad3/capturas/11_nueva_solicitud.png)
+
+![Solicitud pendiente del usuario](evidencias/unidad3/capturas/12_mis_prestamos_pendiente.png)
+
+También abrí el formulario para editar una solicitud mientras seguía pendiente.
+
+![Edición de solicitud](evidencias/unidad3/capturas/13_edicion_prestamo.png)
+
+**Finalmente volví a entrar como ADMIN.** En Gestión de préstamos comprobé que la solicitud aparecía pendiente. La aprobé, registré la entrega y después la devolución.
+
+| Paso | Estado que vi | Disponibilidad esperada del equipo |
+|---|---|---|
+| Solicitud nueva | `PENDIENTE` | `DISPONIBLE` hasta su aprobación |
+| Aprobación | `APROBADO` | `RESERVADO` |
+| Entrega | `ENTREGADO` | `PRESTADO` |
+| Devolución | `DEVUELTO` | `DISPONIBLE` |
+
+![Préstamo pendiente en administración](evidencias/unidad3/capturas/14_admin_prestamo_pendiente.png)
+
+![Préstamo aprobado](evidencias/unidad3/capturas/15_admin_prestamo_aprobado.png)
+
+![Préstamo entregado](evidencias/unidad3/capturas/16_admin_prestamo_entregado.png)
+
+![Préstamo devuelto](evidencias/unidad3/capturas/17_admin_prestamo_devuelto.png)
+
+Las capturas muestran el cambio del **estado del préstamo** hasta `DEVUELTO`. Las reglas de disponibilidad están implementadas en el backend; si el profesor solicita comprobarlas directamente en el inventario o en PostgreSQL, conviene agregar también esa evidencia.
+
+## 9. Persistencia y prueba de carga
+
+Para documentar mejor la orquestación, dejé preparados estos procedimientos de verificación. **Las capturas que reuní hasta ahora no incluyen el resultado de una prueba de persistencia después de reiniciar ni una prueba de carga**, por lo que no las doy por aprobadas sin ejecutarlas.
+
+### 9.1 Persistencia de PostgreSQL después de un reinicio
+
+Primero se guardan los registros de las tablas principales en un archivo local:
+
+```bash
+mkdir -p evidencias/unidad3/salidas
+
+docker compose --env-file .env.unidad3 \
+  -f compose.unidad3.yml exec -T db \
+  psql -U labtrack -d labtrack_db -At -F '|' \
+  -c "SELECT (SELECT COUNT(*) FROM usuarios),
+             (SELECT COUNT(*) FROM categorias),
+             (SELECT COUNT(*) FROM equipos),
+             (SELECT COUNT(*) FROM prestamos);" \
+  > evidencias/unidad3/salidas/antes_reinicio.txt
+```
+
+Después se reinician únicamente los contenedores de esta unidad:
+
+```bash
+docker compose --env-file .env.unidad3 \
+  -f compose.unidad3.yml restart
+
+docker compose --env-file .env.unidad3 \
+  -f compose.unidad3.yml ps -a
+```
+
+Cuando vuelvan a estar saludables, se realiza la misma consulta y se comparan los resultados:
+
+```bash
+docker compose --env-file .env.unidad3 \
+  -f compose.unidad3.yml exec -T db \
+  psql -U labtrack -d labtrack_db -At -F '|' \
+  -c "SELECT (SELECT COUNT(*) FROM usuarios),
+             (SELECT COUNT(*) FROM categorias),
+             (SELECT COUNT(*) FROM equipos),
+             (SELECT COUNT(*) FROM prestamos);" \
+  > evidencias/unidad3/salidas/despues_reinicio.txt
+
+diff -u evidencias/unidad3/salidas/antes_reinicio.txt \
+        evidencias/unidad3/salidas/despues_reinicio.txt
+```
+
+Si `diff` no encuentra cambios, se conservaron los conteos. También hay que revisar en el navegador que el préstamo devuelto siga en el historial para confirmar que no se trata solamente de una coincidencia en el número de registros.
+
+### 9.2 Prueba de carga controlada sobre la API
+
+Este ejemplo utiliza Python y realiza **40 consultas en total, como máximo cuatro simultáneas**, a la ruta de salud. Es una comprobación ligera para el laboratorio, no una prueba de capacidad de producción.
+
+```bash
+python3 - <<'PY'
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from urllib.request import urlopen
+from collections import Counter
+from statistics import mean
+from time import perf_counter
+
+URL = 'http://127.0.0.1:4303/api/health/db'
+
+def consultar(_):
+    inicio = perf_counter()
+    try:
+        with urlopen(URL, timeout=10) as respuesta:
+            respuesta.read()
+            return respuesta.status, perf_counter() - inicio
+    except Exception:
+        return 'ERROR', perf_counter() - inicio
+
+with ThreadPoolExecutor(max_workers=4) as grupo:
+    resultados = list(grupo.map(consultar, range(40)))
+
+codigos = Counter(estado for estado, _ in resultados)
+tiempos = sorted(t * 1000 for _, t in resultados)
+print('Resultados HTTP:', dict(codigos))
+print(f'Tiempo promedio: {mean(tiempos):.1f} ms')
+print(f'Tiempo máximo: {max(tiempos):.1f} ms')
+print(f'Percentil 95 aprox.: {tiempos[37]:.1f} ms')
+PY
+```
+
+Después de realizarla, el resultado y una captura de `docker stats` permitirán comparar el comportamiento de los contenedores antes y durante las peticiones. No se deben inventar resultados ni considerar un ensayo ligero como una evaluación exhaustiva de rendimiento.
+
+## 10. Evidencias de la práctica
+
+Extraje las capturas originales de mi documento de evidencias y las organicé en `evidencias/unidad3/capturas/`, para que se puedan abrir desde el README en GitHub.
+
+| Archivo | Qué muestra |
 |---|---|
-| [01. Versiones de Angular](evidencias/capturas/01_angular_versiones.png) | Angular CLI, framework, Node.js y TypeScript |
-| [02. Backend NestJS](evidencias/capturas/02_nestjs_build_test.png) | Compilación y prueba inicial de Jest |
-| [03. Base de datos en Docker](evidencias/capturas/03_postgresql_docker.png) | Arranque del servicio PostgreSQL |
-| [04. Prisma válido](evidencias/capturas/04_prisma_validacion.png) | Verificación del esquema |
-| [05. Migración inicial](evidencias/capturas/05_prisma_migracion.png) | Creación de las tablas y generación del cliente |
-| [21. Angular final](evidencias/capturas/21_frontend_compilacion_y_tests.png) | Build y dos pruebas Vitest aprobadas |
+| [01. Inicio de Compose](evidencias/unidad3/capturas/01_docker_compose_arranque.png) | Creación de red, volumen y contenedores |
+| [02. Servicios iniciales](evidencias/unidad3/capturas/02_compose_servicios_iniciales.png) | Primer listado de los servicios desplegados |
+| [03. Base de datos](evidencias/unidad3/capturas/03_api_base_datos_http_200.png) | API responde HTTP 200 desde Nginx |
+| [04. HTTP y seguridad](evidencias/unidad3/capturas/04_frontend_200_y_ruta_401.png) | Frontend HTTP 200 y ruta privada HTTP 401 |
+| [05. Login](evidencias/unidad3/capturas/05_pantalla_login.png) | Formulario de inicio de sesión |
+| [06. Registro](evidencias/unidad3/capturas/06_registro_solicitante.png) | Formulario de registro de un solicitante |
+| [07. Recursos](evidencias/unidad3/capturas/07_consumo_recursos_docker_stats.png) | Medición de memoria, CPU y procesos |
+| [08. Equipos](evidencias/unidad3/capturas/08_gestion_equipos_admin.png) | Inventario y formulario de edición |
+| [09. Categorías](evidencias/unidad3/capturas/09_gestion_categorias_admin.png) | Alta y listado de categorías |
+| [10. Catálogo](evidencias/unidad3/capturas/10_catalogo_solicitante.png) | Equipo disponible para solicitar |
+| [11. Solicitud](evidencias/unidad3/capturas/11_nueva_solicitud.png) | Formulario de préstamo |
+| [12. Historial](evidencias/unidad3/capturas/12_mis_prestamos_pendiente.png) | Solicitud pendiente del solicitante |
+| [13. Edición](evidencias/unidad3/capturas/13_edicion_prestamo.png) | Edición mientras está pendiente |
+| [14. ADMIN: pendiente](evidencias/unidad3/capturas/14_admin_prestamo_pendiente.png) | Solicitud por aprobar o rechazar |
+| [15. ADMIN: aprobado](evidencias/unidad3/capturas/15_admin_prestamo_aprobado.png) | Aprobación y reserva |
+| [16. ADMIN: entregado](evidencias/unidad3/capturas/16_admin_prestamo_entregado.png) | Registro de la entrega |
+| [17. ADMIN: devuelto](evidencias/unidad3/capturas/17_admin_prestamo_devuelto.png) | Recepción del equipo y finalización |
 
-### 10.2 Pantallas de ambos usuarios
+Las capturas de inicio y las de uso de la aplicación corresponden a distintos momentos de la práctica. Por ejemplo, la captura inicial muestra cero usuarios; después registré las cuentas con las que realicé el flujo de préstamo.
 
-| Evidencia | Qué comprobé |
-|---|---|
-| [06. Inicio de sesión](evidencias/capturas/06_inicio_sesion.png) | Formulario de acceso |
-| [07. Panel de ADMIN](evidencias/capturas/07_panel_admin.png) | Contadores y navegación administrativa |
-| [08. Categorías](evidencias/capturas/08_categorias.png) | Alta y listado de categorías |
-| [09. Equipos](evidencias/capturas/09_equipos.png) | Inventario y opciones de mantenimiento y baja |
-| [10. Catálogo ADMIN](evidencias/capturas/10_catalogo_admin.png) | Búsqueda, filtros y equipos |
-| [11. Catálogo SOLICITANTE](evidencias/capturas/11_catalogo_solicitante.png) | Equipos y opciones de solicitud |
-| [12. Mis préstamos](evidencias/capturas/12_mis_prestamos.png) | Historial y estados del solicitante |
-| [13. Nueva solicitud](evidencias/capturas/13_nueva_solicitud.png) | Selección de equipo, fechas y motivo |
-| [14. Solicitudes pendientes](evidencias/capturas/14_prestamos_pendientes.png) | Solicitudes registradas desde Angular |
-| [15. Cancelación](evidencias/capturas/15_cancelacion.png) | Solicitud cancelada y mensaje de confirmación |
-| [16. Edición](evidencias/capturas/16_edicion_solicitud.png) | Formulario de modificación mientras está pendiente |
-| [17. Gestión inicial](evidencias/capturas/17_prestamo_pendiente.png) | ADMIN puede aprobar o rechazar |
-| [18. Aprobación](evidencias/capturas/18_prestamo_aprobado.png) | Estado APROBADO y opción de entregar |
-| [19. Entrega](evidencias/capturas/19_prestamo_entregado.png) | Estado ENTREGADO y opción de recibir |
-| [20. Devolución](evidencias/capturas/20_prestamo_devuelto.png) | Estado DEVUELTO y cierre del préstamo |
+## 11. Dificultades que encontré
 
-### 10.3 Verificación del historial
+Durante esta actividad se me presentaron algunos problemas que tuve que resolver antes de continuar:
 
-Después de registrar y cancelar solicitudes, pude comprobar que el historial no desaparecía. El administrador seguía viendo las solicitudes anteriores con su estado, mientras que el solicitante solamente tenía disponible la edición y cancelación para solicitudes pendientes.
+**El error de `npm ci`.** La primera construcción del frontend se detuvo porque `package.json` y `package-lock.json` no coincidían para la instalación que hacía Docker. El mensaje mencionaba los paquetes `@emnapi/core` y `@emnapi/runtime`. Ajusté la instalación y fijé npm 11.6.2 durante la construcción. Al repetirla, Angular compiló, pasaron sus dos pruebas y se creó la imagen.
 
-![Mis préstamos y estados guardados](evidencias/capturas/12_mis_prestamos.png)
+**El token no llegaba al backend.** Después de levantar los tres contenedores pude entrar como ADMIN, pero el panel mostraba el mensaje «Se requiere un token Bearer». Revisé el interceptor de Angular y encontré que todavía estaba buscando la dirección antigua `http://127.0.0.1:3002/`. Lo cambié para que reconociera `/api/`, volví a construir solamente el frontend y recreé ese contenedor. Al entrar otra vez, el panel cargó sin el error.
 
-## 11. Relación con la rúbrica
+**La espera de los servicios.** Al iniciar Docker, el frontend apareció durante unos segundos como `health: starting`. Volví a ejecutar `docker compose ps -a` después de la inicialización y comprobé que los tres contenedores estuvieran saludables. No fue necesario borrar el volumen ni reiniciar Docker Desktop.
 
-El instrumento de la **Unidad II — Diseño y desarrollo de software** evalúa una aplicación frontend conectada a una API, una aplicación backend funcional, el resultado global y el apartado SER.
+Resolver estos detalles me sirvió para comprender mejor la diferencia entre ejecutar una aplicación directamente en Linux y ejecutarla distribuida entre varios contenedores.
 
-| Criterio | Dónde lo desarrollé y comprobé | Valor de la rúbrica |
-|---|---|---:|
-| Menú personalizado por rol | `frontend/src/app/app.routes.ts`, guards y capturas de ambos roles | 1.5 |
-| Interfaz de inicio de sesión | Pantalla de login y `/auth/login` | 1.5 |
-| Interfaz para listar, crear, actualizar y eliminar | Gestión de categorías y equipos, mis préstamos y bajas lógicas | 1.5 |
-| Inicio de sesión en backend | Módulo `auth` con validación de credenciales y JWT | 0.5 |
-| Protección de rutas | JWT y roles; respuestas `401` y `403` comprobadas | 1.0 |
-| Conexión a base de datos | NestJS + Prisma + PostgreSQL y `/health/db` | 0.5 |
-| CRUD en backend | Categorías, equipos y operaciones de préstamos | 1.5 |
-| Aplicación funcional | Angular conectado a NestJS con cambios visibles y persistentes | 1.0 |
-| SER: asistencia, portafolio y participación | Evidencias organizadas; valoración final a cargo del docente | 1.0 |
-| **Total de la rúbrica** | | **10.0** |
+## 12. Relación con la lista de cotejo
 
-En esta tabla relacioné cada punto con la parte del proyecto que preparé. La asistencia y la valoración del portafolio se revisan en clase.
+El instrumento de la Unidad III pide los ejercicios realizados en clase y una guía de despliegue sobre el proyecto trabajado en la unidad anterior.
 
-## 12. Dificultades y soluciones
+| Apartado del instrumento | Valor | Dónde lo documenté / estado |
+|---|---:|---|
+| Actividad 1: ejercicios realizados en clase | 3 pts | Debo incorporar los ejercicios que haya revisado y solicitado el docente; no vienen dentro de estas capturas |
+| Documentación y estructura de los contenedores | 1 pt | Secciones 3 y 4: tres servicios, red, volumen y funciones |
+| Compilación y pruebas | 1 pt | Secciones 5 y 6: construcción, Jest, Vitest, HTTP e integración en navegador |
+| Instalación y configuración | 1 pt | Sección 5 y enlaces a Dockerfiles, Nginx y Compose |
+| Limitaciones de recursos | 1 pt | Sección 7: CPU, memoria, procesos y `docker stats` |
+| Evidencia de funcionamiento y orquestación | 1 pt | Secciones 5, 8 y 10: salud de servicios y flujo de préstamos |
+| Repositorio con archivos de orquestación | 1 pt | Los archivos están preparados para publicarse junto con este README; falta comprobar el enlace final del nuevo repositorio |
+| SER: asistencia, actitud y portafolio | 1 pt | Se revisa en clase y lo valora el docente |
+| **Total** | **10 pts** | **Calificación sujeta a revisión del profesor** |
 
-Durante el desarrollo hubo algunos errores que tuve que atender antes de seguir programando:
-
-- **Instalación de Angular:** la creación inicial del proyecto se detuvo por un error interno de npm relacionado con `edgesOut`. Los archivos de Angular sí se habían generado; instalé las dependencias con una versión temporal de npm 11.6.2 y después pude compilar normalmente.
-- **Relaciones de Prisma:** al principio `schema.prisma` devolvía errores `P1012` por la forma en que estaban declaradas algunas relaciones. Ajusté las declaraciones, validé nuevamente el esquema y apliqué la migración inicial.
-- **Ubicación del comando:** una vez ejecuté Prisma desde la carpeta principal y no desde `backend/`. Como no encontraba `prisma/schema.prisma`, intentó buscar una versión diferente del paquete. Volví al directorio correcto y usé la instalación local de Prisma 6.19.0.
-- **Permisos:** comprobé que el menú por rol no era suficiente. Probé las rutas del backend sin token y con un usuario SOLICITANTE para asegurarme de que respondieran `401` y `403` cuando correspondía.
-- **Disponibilidad:** preparé dos solicitudes pendientes para el mismo equipo. La primera se pudo aprobar, mientras que la segunda recibió `HTTP 409`. Después de la devolución, el equipo volvió a estar disponible.
-
-Estos errores también me ayudaron a organizar mejor mis pruebas: primero verificaba una operación desde la API y después la repetía desde Angular.
+La documentación de una prueba de carga y de persistencia después de reiniciar se puede completar con los comandos de la sección 9. Esas ejecuciones todavía no están acreditadas por el archivo de evidencias recibido.
 
 ## 13. Conclusión
 
-Al terminar esta actividad logré desarrollar una aplicación con sus tres partes principales conectadas: interfaz, API y base de datos. Lo que más me sirvió fue trabajar los roles de forma separada, porque así pude comprobar que no todos los usuarios deben tener acceso a las mismas funciones. También aprendí a relacionar las tablas para guardar más de un equipo por préstamo sin repetir información innecesaria.
+En esta unidad aprendí a preparar el despliegue de una aplicación que ya tenía desarrollada. Antes iniciaba Angular y NestJS desde terminales diferentes y PostgreSQL tenía su propia configuración; ahora pude levantar los tres servicios con Docker Compose y abrir LabTrack desde un solo puerto en el navegador.
 
-La parte más importante para mí fue comprobar todo el recorrido de un préstamo. No bastaba con que apareciera como aprobado en la pantalla; también debía reservar el equipo, marcarlo como prestado al entregarlo y regresarlo a disponible al recibirlo. Al revisar esos cambios entendí mejor por qué hacen falta validaciones y transacciones cuando varias acciones dependen de la misma información.
+Lo que más se me complicó no fue crear los contenedores, sino hacer que funcionaran juntos. Primero apareció el problema de las dependencias al construir Angular y luego el detalle del JWT, porque había cambiado la dirección de la API. Cuando corregí eso comprobé que podía entrar al panel del administrador, registrar equipo y terminar un préstamo hasta su devolución.
 
-Quedaron documentadas las pruebas de autenticación, el CRUD, la conexión a PostgreSQL y el recorrido de solicitudes desde el navegador. El proyecto me permitió practicar el desarrollo de software con Angular y NestJS, pero también reforcé lo que había trabajado antes con Docker, Git y la organización de evidencias técnicas.
+También pude observar cuánto recurso estaba utilizando cada contenedor y dejar límites para que esta práctica no interfiera con los otros proyectos que tengo en mi computadora. Entendí mejor para qué sirven las redes internas de Docker, los healthchecks y los volúmenes de datos. Considero que el avance más importante fue pasar de tener una aplicación que funcionaba solamente en mi entorno de desarrollo a una que puedo iniciar y revisar de manera más ordenada con Compose.
 
-**Méndez Fernández Alan Eusebio**
-
+**Méndez Fernández Alan Eusebio**  
 *Ingeniería en Redes Inteligentes y Ciberseguridad — GIRI6091*
 
-## 14. Fuentes consultadas
+## 14. Referencias
 
-- Profesor(a) de la asignatura. *Caso de uso de Unidad II: LabTrack — Sistema de préstamo de equipo de laboratorio* (material proporcionado en clase).
-- Universidad Tecnológica del Norte de Guanajuato. *Lista de cotejo, Unidad II: Diseño y desarrollo de software* (instrumento de evaluación proporcionado en clase).
-- Angular. (s. f.). *Angular documentation*. https://angular.dev/
-- NestJS. (s. f.). *Documentation*. https://docs.nestjs.com/
-- Prisma. (s. f.). *Prisma ORM documentation*. https://www.prisma.io/docs/
-- PostgreSQL Global Development Group. (s. f.). *PostgreSQL documentation*. https://www.postgresql.org/docs/
-- Docker, Inc. (s. f.). *Docker Compose documentation*. https://docs.docker.com/compose/
-- Git. (s. f.). *Git documentation*. https://git-scm.com/doc
-
----
-
-El proyecto, las migraciones, las pruebas y las capturas se encuentran en este repositorio. Las credenciales locales se guardan en archivos `.env` que dejé fuera de Git.
+- Material del profesor: *Lista de cotejo — Unidad III, Interfaces de programación de aplicaciones en la automatización de redes*, Automatización de Infraestructura Digital I.
+- Caso de estudio de la Unidad II: *LabTrack — Sistema de préstamo de equipo de laboratorio*.
+- Docker. *Docker Compose*. https://docs.docker.com/compose/
+- Docker. *Dockerfile reference*. https://docs.docker.com/reference/dockerfile/
+- Docker. *Resource constraints*. https://docs.docker.com/engine/containers/resource_constraints/
+- Nginx. *Documentation*. https://nginx.org/en/docs/
+- Angular. *Documentation*. https://angular.dev/
+- NestJS. *Documentation*. https://docs.nestjs.com/
+- Prisma. *Prisma Migrate*. https://www.prisma.io/docs/orm/prisma-migrate
+- PostgreSQL. *Documentation*. https://www.postgresql.org/docs/

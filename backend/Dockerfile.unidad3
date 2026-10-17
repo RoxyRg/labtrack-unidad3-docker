@@ -1,0 +1,28 @@
+# Construye y comprueba NestJS sin depender del Node.js instalado en el host.
+FROM node:20-bookworm-slim AS build
+WORKDIR /app
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+COPY package.json package-lock.json ./
+RUN npm install -g npm@11.6.2 --no-audit --no-fund
+RUN npm ci --no-audit --no-fund
+COPY prisma ./prisma
+RUN npx prisma generate
+COPY tsconfig*.json nest-cli.json ./
+COPY src ./src
+COPY test ./test
+RUN npm run build && npm test -- --runInBand
+
+# Imagen de ejecución. La CLI de Prisma se mantiene para aplicar migraciones al arrancar.
+FROM node:20-bookworm-slim
+WORKDIR /app
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+ENV NODE_ENV=production
+COPY --chown=node:node --from=build /app/node_modules ./node_modules
+COPY --chown=node:node --from=build /app/prisma ./prisma
+COPY --chown=node:node --from=build /app/dist ./dist
+COPY --chown=node:node --from=build /app/package.json ./package.json
+USER node
+EXPOSE 3002
+CMD ["sh", "-c", "./node_modules/.bin/prisma migrate deploy && node dist/main.js"]

@@ -1,0 +1,78 @@
+name: labtrack-unidad3
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: labtrack_db
+      POSTGRES_USER: labtrack
+      POSTGRES_PASSWORD: ${LABTRACK_DB_PASSWORD:?Falta LABTRACK_DB_PASSWORD en .env.unidad3}
+    volumes:
+      - labtrack_u3_pgdata:/var/lib/postgresql/data
+    networks:
+      - labtrack_u3_interna
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U labtrack -d labtrack_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+    cpus: 0.75
+    mem_limit: 512m
+    pids_limit: 200
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.unidad3
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: "3002"
+      HOST: 0.0.0.0
+      DATABASE_URL: postgresql://labtrack:${LABTRACK_DB_PASSWORD:?Falta LABTRACK_DB_PASSWORD en .env.unidad3}@db:5432/labtrack_db?schema=public
+      JWT_SECRET: ${LABTRACK_JWT_SECRET:?Falta LABTRACK_JWT_SECRET en .env.unidad3}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - labtrack_u3_interna
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3002/health/db').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 45s
+    cpus: 1.0
+    mem_limit: 768m
+    pids_limit: 256
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.unidad3
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:4303:80"
+    networks:
+      - labtrack_u3_interna
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    cpus: 0.5
+    mem_limit: 128m
+    pids_limit: 128
+
+volumes:
+  labtrack_u3_pgdata:
+
+networks:
+  labtrack_u3_interna:
+    driver: bridge

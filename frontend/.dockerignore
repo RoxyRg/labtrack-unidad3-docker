@@ -1,0 +1,10 @@
+node_modules
+.env
+.env.*
+dist
+.angular
+.git
+coverage
+*.log
+*.bak*
+*.respaldo

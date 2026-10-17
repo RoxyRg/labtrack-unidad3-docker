@@ -10,3 +10,12 @@
 **/.labtrack-backups/
 **/*.bak*
 **/*.respaldo
+
+# Unidad III
+.env.unidad3
+**/.env
+**/.env.*
+**/node_modules/
+**/dist/
+**/*.bak*
+.labtrack-backups/

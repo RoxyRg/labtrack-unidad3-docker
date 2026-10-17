@@ -5,7 +5,7 @@ import { Observable, tap } from 'rxjs';
 import { LoginResponse, Usuario } from './models';
 
 const KEY = 'labtrack-sesion';
-const API = 'http://127.0.0.1:3002';
+const API = '/api';
 function recuperar(): LoginResponse | null {
   try {
     const dato = sessionStorage.getItem(KEY);

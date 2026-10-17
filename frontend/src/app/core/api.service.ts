@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Categoria, Equipo, EquipoPayload, Prestamo, PrestamoPayload } from './models';
-const API = 'http://127.0.0.1:3002';
+const API = '/api';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
