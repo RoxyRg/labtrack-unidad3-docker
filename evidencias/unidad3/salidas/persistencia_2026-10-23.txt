@@ -1,0 +1,39 @@
+LABTRACK — UNIDAD III
+Evidencia de persistencia de PostgreSQL tras reinicio
+Fecha: 23 de octubre de 2026
+Origen: salidas de terminal compartidas por el estudiante.
+Componente: PostgreSQL 16 en Docker Compose; volumen labtrack_u3_pgdata.
+
+COMANDO UTILIZADO PARA CONSULTAR (antes y después)
+docker compose --env-file .env.unidad3 -f compose.unidad3.yml exec -T db \
+  psql -U labtrack -d labtrack_db -At -F '|' \
+  -c "SELECT
+    (SELECT COUNT(*) FROM usuarios),
+    (SELECT COUNT(*) FROM categorias),
+    (SELECT COUNT(*) FROM equipos),
+    (SELECT COUNT(*) FROM prestamos);"
+
+ANTES DEL REINICIO
+3|1|1|1
+
+REINICIO
+docker compose --env-file .env.unidad3 -f compose.unidad3.yml restart
+
+ESTADO OBSERVADO DESPUÉS DEL REINICIO
+labtrack-unidad3-backend-1: Up 11 seconds (healthy)
+labtrack-unidad3-db-1: Up 14 seconds (healthy)
+labtrack-unidad3-frontend-1: Up 13 seconds (healthy)
+
+DESPUÉS DEL REINICIO
+3|1|1|1
+
+COMPARACIÓN
+diff -u evidencias/unidad3/salidas/antes_reinicio.txt \
+        evidencias/unidad3/salidas/despues_reinicio.txt
+CORRECTO: los conteos se conservaron.
+
+INTERPRETACIÓN
+Se conservaron los conteos de registros: 3 usuarios, 1 categoría,
+1 equipo y 1 préstamo. Los tres contenedores volvieron a estado healthy.
+Esta comparación no demuestra igualdad del contenido de todas las filas;
+para ello se requiere una comprobación adicional del contenido de los registros.
