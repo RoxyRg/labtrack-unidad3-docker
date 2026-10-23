@@ -391,7 +391,7 @@ Las capturas muestran el cambio del **estado del préstamo** hasta `DEVUELTO`. L
 
 ## 9. Persistencia y prueba de carga
 
-Ya realicé una **prueba de carga controlada** y registré sus resultados del 23 de octubre de 2026. La comprobación de persistencia después de reiniciar los contenedores continúa pendiente; el procedimiento se conserva a continuación para documentarla cuando se ejecute.
+El 23 de octubre de 2026 realicé las **dos comprobaciones adicionales**: persistencia de PostgreSQL tras reiniciar los contenedores y prueba de carga controlada sobre la API. A continuación explico los comandos utilizados, los resultados y el alcance de cada prueba.
 
 ### 9.1 Persistencia de PostgreSQL después de un reinicio
 
@@ -436,7 +436,20 @@ diff -u evidencias/unidad3/salidas/antes_reinicio.txt \
         evidencias/unidad3/salidas/despues_reinicio.txt
 ```
 
-Si `diff` no encuentra cambios, se conservaron los conteos. También hay que revisar en el navegador que el préstamo devuelto siga en el historial para confirmar que no se trata solamente de una coincidencia en el número de registros.
+**Resultado real — 23 de octubre de 2026.** Ejecuté las consultas antes y después del reinicio de los tres contenedores y comparé los archivos de resultados:
+
+| Tabla | Antes de reiniciar | Después de reiniciar |
+|---|---:|---:|
+| `usuarios` | 3 | 3 |
+| `categorias` | 1 | 1 |
+| `equipos` | 1 | 1 |
+| `prestamos` | 1 | 1 |
+
+Las dos consultas devolvieron `3|1|1|1`. El comando `diff -u` no encontró diferencias y mostró el mensaje `CORRECTO: los conteos se conservaron.` Tras el reinicio, los servicios `db`, `backend` y `frontend` volvieron a quedar en estado `healthy`.
+
+Guardé la transcripción de los resultados en [evidencia de persistencia](evidencias/unidad3/salidas/persistencia_2026-10-23.txt).
+
+**Alcance:** la prueba verifica la conservación del número de registros en cuatro tablas tras el reinicio, respaldada por el volumen persistente de PostgreSQL. No compara los valores de cada fila, por lo que es recomendable comprobar también un préstamo anterior en el historial de la aplicación si se requiere una verificación más profunda.
 
 ### 9.2 Prueba de carga controlada sobre la API
 
@@ -512,6 +525,7 @@ Extraje las capturas originales de mi documento de evidencias y las organicé en
 | [16. ADMIN: entregado](evidencias/unidad3/capturas/16_admin_prestamo_entregado.png) | Registro de la entrega |
 | [17. ADMIN: devuelto](evidencias/unidad3/capturas/17_admin_prestamo_devuelto.png) | Recepción del equipo y finalización |
 | [18. Prueba de carga (salida de terminal)](evidencias/unidad3/salidas/prueba_carga_2026-10-23.txt) | 40 peticiones HTTP 200, tiempos y revisión posterior de los tres contenedores |
+| [19. Persistencia después del reinicio](evidencias/unidad3/salidas/persistencia_2026-10-23.txt) | Conteos idénticos antes y después y tres contenedores saludables |
 
 Las capturas de inicio y las de uso de la aplicación corresponden a distintos momentos de la práctica. Por ejemplo, la captura inicial muestra cero usuarios; después registré las cuentas con las que realicé el flujo de préstamo.
 
@@ -541,7 +555,7 @@ Por indicación del docente, esta entrega corresponde **solamente a la Actividad
 | Repositorio y archivos de orquestación | 1 pt | Este repositorio, `compose.unidad3.yml` y los Dockerfiles |
 | **Total de la Actividad 2** | **6 pts** | **Cobertura documentada; evaluación a cargo del docente** |
 
-La prueba de carga ya está ejecutada y registrada. La comprobación de persistencia tras reiniciar contenedores es una evidencia adicional que sigue pendiente, por lo que no la presento como realizada.
+Las pruebas adicionales de **carga controlada y persistencia tras reinicio** ya están ejecutadas y documentadas en la sección 9. La entrega se limita a la Actividad 2 según la indicación del docente; la calificación depende de la demostración y revisión en clase.
 
 ## 13. Conclusión
 
@@ -549,7 +563,7 @@ En esta unidad aprendí a preparar el despliegue de una aplicación que ya tení
 
 Lo que más se me complicó no fue crear los contenedores, sino hacer que funcionaran juntos. Primero apareció el problema de las dependencias al construir Angular y luego el detalle del JWT, porque había cambiado la dirección de la API. Cuando corregí eso comprobé que podía entrar al panel del administrador, registrar equipo y terminar un préstamo hasta su devolución.
 
-También pude observar cuánto recurso estaba utilizando cada contenedor y dejar límites para que esta práctica no interfiera con los otros proyectos que tengo en mi computadora. Entendí mejor para qué sirven las redes internas de Docker, los healthchecks y los volúmenes de datos. Considero que el avance más importante fue pasar de tener una aplicación que funcionaba solamente en mi entorno de desarrollo a una que puedo iniciar y revisar de manera más ordenada con Compose.
+También pude observar cuánto recurso estaba utilizando cada contenedor y dejar límites para que esta práctica no interfiera con los otros proyectos que tengo en mi computadora. Después comprobé que los tres servicios seguían saludables tras 40 consultas controladas a la API y que los conteos de usuarios, categorías, equipos y préstamos se conservaron después de reiniciarlos. Entendí mejor para qué sirven las redes internas de Docker, los healthchecks y los volúmenes de datos. Considero que el avance más importante fue pasar de tener una aplicación que funcionaba solamente en mi entorno de desarrollo a una que puedo iniciar y revisar de manera más ordenada con Compose.
 
 **Méndez Fernández Alan Eusebio**
 
