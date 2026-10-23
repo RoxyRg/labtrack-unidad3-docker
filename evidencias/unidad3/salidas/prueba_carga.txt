@@ -1,0 +1,5 @@
+Total de peticiones: 40
+Resultados HTTP: {200: 40}
+Tiempo promedio: 15.18 ms
+Tiempo máximo: 110.93 ms
+Percentil 95: 89.10 ms
