@@ -1,0 +1,28 @@
+LabTrack — Unidad III
+Prueba de carga controlada — 23 de octubre de 2026
+Fuente: salida de terminal e imagen proporcionadas por el estudiante.
+
+Entorno: Linux, Docker Compose; Nginx (frontend), NestJS (backend) y PostgreSQL.
+Endpoint: GET http://127.0.0.1:4303/api/health/db
+Método: Python 3, ThreadPoolExecutor(max_workers=4).
+Volumen: 40 peticiones en total; hasta 4 solicitudes concurrentes.
+Timeout por solicitud: 10 segundos.
+
+SALIDA OBSERVADA
+Total de peticiones: 40
+Resultados HTTP: {200: 40}
+Tiempo promedio: 15.18 ms
+Tiempo máximo: 110.93 ms
+Percentil 95: 89.10 ms
+
+VERIFICACIÓN DESPUÉS DE LA CARGA
+docker compose --env-file .env.unidad3 -f compose.unidad3.yml ps -a
+- labtrack-unidad3-backend-1: Up (healthy)
+- labtrack-unidad3-db-1: Up (healthy)
+- labtrack-unidad3-frontend-1: Up (healthy)
+- Frontend expuesto por 127.0.0.1:4303 -> puerto 80
+
+INTERPRETACIÓN
+Las 40 solicitudes respondieron HTTP 200. Los 3 contenedores continuaron saludables.
+Prueba ligera sobre ruta de salud. No mide capacidad máxima de usuarios,
+ni rendimiento de escritura o concurrencia en el flujo de préstamos.
