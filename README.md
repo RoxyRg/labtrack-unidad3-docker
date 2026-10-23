@@ -391,7 +391,7 @@ Las capturas muestran el cambio del **estado del préstamo** hasta `DEVUELTO`. L
 
 ## 9. Persistencia y prueba de carga
 
-Todavía me falta comprobar la persistencia después de reiniciar los contenedores y hacer una prueba de carga. Dejé los comandos en esta sección para ejecutarlos y agregar las capturas cuando termine ambas comprobaciones.
+Ya realicé una **prueba de carga controlada** y registré sus resultados del 23 de octubre de 2026. La comprobación de persistencia después de reiniciar los contenedores continúa pendiente; el procedimiento se conserva a continuación para documentarla cuando se ejecute.
 
 ### 9.1 Persistencia de PostgreSQL después de un reinicio
 
@@ -473,7 +473,20 @@ print(f'Percentil 95 aprox.: {tiempos[37]:.1f} ms')
 PY
 ```
 
-Después de realizarla, el resultado y una captura de `docker stats` permitirán comparar el comportamiento de los contenedores antes y durante las peticiones. No se deben inventar resultados ni considerar un ensayo ligero como una evaluación exhaustiva de rendimiento.
+**Resultado real — 23 de octubre de 2026.** Ejecuté 40 consultas HTTP GET a `/api/health/db` con un máximo de cuatro peticiones simultáneas, desde el equipo Linux hacia Nginx, que redirigió las solicitudes al backend. Todas respondieron correctamente:
+ 
+| Métrica observada | Resultado |
+|---|---:|
+| Solicitudes realizadas | 40 |
+| Respuestas HTTP 200 | 40 (100 %) |
+| Tiempo de respuesta promedio | 15.18 ms |
+| Tiempo máximo | 110.93 ms |
+| Percentil 95 | 89.10 ms |
+| Contenedores saludables al finalizar | 3 de 3 |
+
+Guardé los datos compartidos desde la terminal en [la evidencia de la prueba de carga](evidencias/unidad3/salidas/prueba_carga_2026-10-23.txt). Después ejecuté `docker compose ps -a` y comprobé que PostgreSQL, NestJS y Angular/Nginx seguían en estado `healthy`.
+
+**Alcance:** esta es una prueba de carga ligera de un endpoint de salud, no una medida de capacidad máxima ni una prueba de carga de autenticación, escritura o concurrencia de préstamos. Los tiempos pueden variar al repetirla.
 
 ## 10. Evidencias de la práctica
 
@@ -498,6 +511,7 @@ Extraje las capturas originales de mi documento de evidencias y las organicé en
 | [15. ADMIN: aprobado](evidencias/unidad3/capturas/15_admin_prestamo_aprobado.png) | Aprobación y reserva |
 | [16. ADMIN: entregado](evidencias/unidad3/capturas/16_admin_prestamo_entregado.png) | Registro de la entrega |
 | [17. ADMIN: devuelto](evidencias/unidad3/capturas/17_admin_prestamo_devuelto.png) | Recepción del equipo y finalización |
+| [18. Prueba de carga (salida de terminal)](evidencias/unidad3/salidas/prueba_carga_2026-10-23.txt) | 40 peticiones HTTP 200, tiempos y revisión posterior de los tres contenedores |
 
 Las capturas de inicio y las de uso de la aplicación corresponden a distintos momentos de la práctica. Por ejemplo, la captura inicial muestra cero usuarios; después registré las cuentas con las que realicé el flujo de préstamo.
 
@@ -515,21 +529,19 @@ Resolver estos detalles me sirvió para comprender mejor la diferencia entre eje
 
 ## 12. Relación con la lista de cotejo
 
-El instrumento de la Unidad III pide los ejercicios realizados en clase y una guía de despliegue sobre el proyecto trabajado en la unidad anterior.
+Por indicación del docente, esta entrega corresponde **solamente a la Actividad 2: guía de instalación y configuración de una aplicación**, con valor de **6 puntos**. La Actividad 1 (trabajos en clase) no se requiere para esta entrega.
 
-| Apartado del instrumento | Valor | Dónde lo documenté / estado |
+| Criterio de la Actividad 2 | Valor | Evidencia en este repositorio |
 |---|---:|---|
-| Actividad 1: ejercicios realizados en clase | 3 pts | Debo incorporar los ejercicios que haya revisado y solicitado el docente; no vienen dentro de estas capturas |
-| Documentación y estructura de los contenedores | 1 pt | Secciones 3 y 4: tres servicios, red, volumen y funciones |
-| Compilación y pruebas | 1 pt | Secciones 5 y 6: construcción, Jest, Vitest, HTTP e integración en navegador |
-| Instalación y configuración | 1 pt | Sección 5 y enlaces a Dockerfiles, Nginx y Compose |
+| Documentación de cada contenedor | 1 pt | Secciones 3 y 4: PostgreSQL, NestJS y Angular/Nginx |
+| Compilación y pruebas | 1 pt | Secciones 5, 6 y 9.2: construcción, Jest, Vitest, pruebas HTTP, flujo funcional y prueba de carga |
+| Instalación y archivos de configuración | 1 pt | Sección 5: Dockerfiles, Nginx y Compose |
 | Limitaciones de recursos | 1 pt | Sección 7: CPU, memoria, procesos y `docker stats` |
-| Evidencia de funcionamiento y orquestación | 1 pt | Secciones 5, 8 y 10: salud de servicios y flujo de préstamos |
-| Repositorio con archivos de orquestación | 1 pt | Repositorio publicado en https://github.com/RoxyRg/labtrack-unidad3-docker |
-| SER: asistencia, actitud y portafolio | 1 pt | Se revisa en clase y lo valora el docente |
-| **Total** | **10 pts** | **Calificación sujeta a revisión del profesor** |
+| Funcionamiento y orquestación | 1 pt | Secciones 5, 8 y 10: estado saludable, API y flujo de préstamos |
+| Repositorio y archivos de orquestación | 1 pt | Este repositorio, `compose.unidad3.yml` y los Dockerfiles |
+| **Total de la Actividad 2** | **6 pts** | **Cobertura documentada; evaluación a cargo del docente** |
 
-Los comandos de la sección 9 están preparados, pero todavía tengo que ejecutarlos y guardar las salidas en las evidencias. Los ejercicios de clase también los agregaré cuando los termine.
+La prueba de carga ya está ejecutada y registrada. La comprobación de persistencia tras reiniciar contenedores es una evidencia adicional que sigue pendiente, por lo que no la presento como realizada.
 
 ## 13. Conclusión
 
